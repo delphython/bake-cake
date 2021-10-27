@@ -15,12 +15,11 @@ from ugc.models import Profile
 
 
 def log_errors(f):
-
     def inner(*args, **kwargs):
         try:
             return f(*args, **kwargs)
         except Exception as e:
-            error_message = f'Произошла ошибка: {e}'
+            error_message = f"Произошла ошибка: {e}"
             print(error_message)
             raise e
 
@@ -32,19 +31,19 @@ def do_echo(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
     text = update.message.text
 
-    # p, _ = Profile.objects.get_or_create(
-    #     external_id=chat_id,
-    #     defaults={
-    #         'name': update.message.from_user.username,
-    #     }
-    # )
-    # m = Message(
-    #     profile=p,
-    #     text=text,
-    # )
-    # m.save()
+    p, _ = Profile.objects.get_or_create(
+        external_id=chat_id,
+        defaults={
+            "name": update.message.from_user.username,
+        },
+    )
+    m = Message(
+        profile=p,
+        text=text,
+    )
+    m.save()
 
-    reply_text = f'Ваш ID = {chat_id}\n{text}'
+    reply_text = f"Ваш ID = {chat_id}\n{text}"
     update.message.reply_text(
         text=reply_text,
     )
@@ -54,22 +53,22 @@ def do_echo(update: Update, context: CallbackContext):
 def do_count(update: Update, context: CallbackContext):
     chat_id = update.message.chat_id
 
-    # p, _ = Profile.objects.get_or_create(
-    #     external_id=chat_id,
-    #     defaults={
-    #         'name': update.message.from_user.username,
-    #     }
-    # )
-    # count = Message.objects.filter(profile=p).count()
+    p, _ = Profile.objects.get_or_create(
+        external_id=chat_id,
+        defaults={
+            "name": update.message.from_user.username,
+        },
+    )
+    count = Message.objects.filter(profile=p).count()
 
     count = 0
     update.message.reply_text(
-        text=f'У вас {count} сообщений',
+        text=f"У вас {count} сообщений",
     )
 
 
 class Command(BaseCommand):
-    help = 'Телеграм-бот'
+    help = "Телеграм-бот"
 
     def handle(self, *args, **options):
         # 1 -- правильное подключение
@@ -80,7 +79,7 @@ class Command(BaseCommand):
         bot = Bot(
             request=request,
             token=settings.TOKEN,
-            base_url=getattr(settings, 'PROXY_URL', None),
+            base_url=getattr(settings, "PROXY_URL", None),
         )
         print(bot.get_me())
 
@@ -92,7 +91,7 @@ class Command(BaseCommand):
 
         message_handler = MessageHandler(Filters.text, do_echo)
         updater.dispatcher.add_handler(message_handler)
-        updater.dispatcher.add_handler(CommandHandler('count', do_count))
+        updater.dispatcher.add_handler(CommandHandler("count", do_count))
 
         # 3 -- запустить бесконечную обработку входящих сообщений
         updater.start_polling()
