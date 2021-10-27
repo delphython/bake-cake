@@ -1,3 +1,4 @@
+from environs import Env
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from telegram import Bot
@@ -71,6 +72,9 @@ class Command(BaseCommand):
     help = "Телеграм-бот"
 
     def handle(self, *args, **options):
+        env = Env()
+        env.read_env()
+        TG_TOKEN = env.str("TG_TOKEN")
         # 1 -- правильное подключение
         request = Request(
             connect_timeout=0.5,
@@ -78,7 +82,7 @@ class Command(BaseCommand):
         )
         bot = Bot(
             request=request,
-            token=settings.TOKEN,
+            token=TG_TOKEN,
             base_url=getattr(settings, "PROXY_URL", None),
         )
         print(bot.get_me())
