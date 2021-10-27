@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ""
+SECRET_KEY = "!k5g2b^@qmkxmbnt1ooc3%)yuryyka-j7@_gf3ws#k%q5o+b9r"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -114,6 +114,6 @@ STATIC_ROOT = "/home/www/td/static/"
 
 # Настройки бота
 
-TOKEN = "2041692864:AAEhSdAXU81_RjVkaWRgA-ctV9etef7g1QI"
+TOKEN = ""
 
 # PROXY_URL = 'https://telegg.ru/orig/bot'
