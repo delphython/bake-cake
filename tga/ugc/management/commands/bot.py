@@ -75,6 +75,7 @@ class Command(BaseCommand):
         env = Env()
         env.read_env()
         TG_TOKEN = env.str("TG_TOKEN")
+
         # 1 -- правильное подключение
         request = Request(
             connect_timeout=0.5,
