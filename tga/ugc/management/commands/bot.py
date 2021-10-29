@@ -22,9 +22,18 @@ from telegram.ext import (
 from telegram.utils.request import Request
 
 
-from ugc.models import Message
-from ugc.models import Profile
-
+from ugc.models import (
+    Message,
+    Profile,
+    Customers,
+    OrderStatuses,
+    Levels,
+    Forms,
+    Topping,
+    Berries,
+    Decors,
+    Orders,
+)
 
 FIRST, SECOND = range(2)
 (
