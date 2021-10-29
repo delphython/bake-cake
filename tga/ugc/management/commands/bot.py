@@ -52,7 +52,8 @@ FIRST, SECOND = range(2)
     DELIVERY_TIME,
     ORDER_CAKE,
     SHOW_COST,
-) = range(15)
+    INPUT_LEVELS,
+) = range(16)
 
 
 def log_errors(f):
@@ -152,21 +153,30 @@ def start_over(update, context):
 def levels(update, context):
     query = update.callback_query
     bot = context.bot
-    keyboard = [
+
+    levels = Levels.objects.all()
+    keyboard = []
+
+    for level in levels:
+        keyboard.append(
+            InlineKeyboardButton(text=level.name, callback_data="FORM")
+        )
+
+    new_keyboard = [keyboard]
+    new_keyboard.append(
         [
             InlineKeyboardButton(
-                "Количество уровней", callback_data=str(FORM)
-            ),
-            InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
+            )
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    )
+
+    reply_markup = InlineKeyboardMarkup(new_keyboard)
+
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Выберите действие:",
+        text="Количество уровней",
         reply_markup=reply_markup,
     )
     return FIRST
@@ -176,15 +186,24 @@ def levels(update, context):
 def form(update, context):
     query = update.callback_query
     bot = context.bot
-    keyboard = [
+    forms = Forms.objects.all()
+    keyboard = []
+
+    for form in forms:
+        keyboard.append(
+            InlineKeyboardButton(text=form.name, callback_data="TOPPING")
+        )
+
+    new_keyboard = [keyboard]
+    new_keyboard.append(
         [
-            InlineKeyboardButton("Форма", callback_data=str(TOPPING)),
             InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
+            )
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    )
+    print()
+    reply_markup = InlineKeyboardMarkup(new_keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
@@ -198,15 +217,23 @@ def form(update, context):
 def topping(update, context):
     query = update.callback_query
     bot = context.bot
-    keyboard = [
+    toppings = Topping.objects.all()
+    keyboard = []
+
+    for topping in toppings:
+        keyboard.append(
+            InlineKeyboardButton(text=topping.name, callback_data="BERRIES")
+        )
+
+    new_keyboard = [keyboard]
+    new_keyboard.append(
         [
-            InlineKeyboardButton("Топпинг", callback_data=str(BERRIES)),
             InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
+            )
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    )
+    reply_markup = InlineKeyboardMarkup(new_keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
@@ -220,15 +247,23 @@ def topping(update, context):
 def berries(update, context):
     query = update.callback_query
     bot = context.bot
-    keyboard = [
+    berries = Berries.objects.all()
+    keyboard = []
+
+    for berry in berries:
+        keyboard.append(
+            InlineKeyboardButton(text=berry.name, callback_data="DECOR")
+        )
+
+    new_keyboard = [keyboard]
+    new_keyboard.append(
         [
-            InlineKeyboardButton("Ягоды", callback_data=str(DECOR)),
             InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
+            )
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    )
+    reply_markup = InlineKeyboardMarkup(new_keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
@@ -242,15 +277,23 @@ def berries(update, context):
 def decor(update, context):
     query = update.callback_query
     bot = context.bot
-    keyboard = [
+    decors = Decors.objects.all()
+    keyboard = []
+
+    for decor in decors:
+        keyboard.append(
+            InlineKeyboardButton(text=decor.name, callback_data="TITLE")
+        )
+
+    new_keyboard = [keyboard]
+    new_keyboard.append(
         [
-            InlineKeyboardButton("Декор", callback_data=str(TITLE)),
             InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
+            )
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    )
+    reply_markup = InlineKeyboardMarkup(new_keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
@@ -489,19 +532,12 @@ class Command(BaseCommand):
                     CallbackQueryHandler(
                         levels, pattern="^" + str(LEVELS) + "$"
                     ),
-                    CallbackQueryHandler(form, pattern="^" + str(FORM) + "$"),
-                    CallbackQueryHandler(
-                        topping, pattern="^" + str(TOPPING) + "$"
-                    ),
-                    CallbackQueryHandler(
-                        berries, pattern="^" + str(BERRIES) + "$"
-                    ),
-                    CallbackQueryHandler(
-                        decor, pattern="^" + str(DECOR) + "$"
-                    ),
-                    CallbackQueryHandler(
-                        title, pattern="^" + str(TITLE) + "$"
-                    ),
+                    # CallbackQueryHandler(form, pattern="^" + str(FORM) + "$"),
+                    CallbackQueryHandler(form, pattern="^FORM$"),
+                    CallbackQueryHandler(topping, pattern="^TOPPING$"),
+                    CallbackQueryHandler(berries, pattern="^BERRIES$"),
+                    CallbackQueryHandler(decor, pattern="^DECOR$"),
+                    CallbackQueryHandler(title, pattern="^TITLE$"),
                     CallbackQueryHandler(
                         comments, pattern="^" + str(COMMENTS) + "$"
                     ),
