@@ -159,7 +159,9 @@ def levels(update, context):
 
     for level in levels:
         keyboard.append(
-            InlineKeyboardButton(text=level.name, callback_data="FORM")
+            InlineKeyboardButton(
+                text=level.name, callback_data=f"FORM|{level.name}"
+            )
         )
 
     new_keyboard = [keyboard]
@@ -176,7 +178,7 @@ def levels(update, context):
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Количество уровней",
+        text="Выберите Количество уровней",
         reply_markup=reply_markup,
     )
     return FIRST
@@ -191,7 +193,9 @@ def form(update, context):
 
     for form in forms:
         keyboard.append(
-            InlineKeyboardButton(text=form.name, callback_data="TOPPING")
+            InlineKeyboardButton(
+                text=form.name, callback_data=f"TOPPING|{form.name}"
+            )
         )
 
     new_keyboard = [keyboard]
@@ -202,12 +206,11 @@ def form(update, context):
             )
         ]
     )
-    print()
     reply_markup = InlineKeyboardMarkup(new_keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Выберите действие:",
+        text="Выберите форму:",
         reply_markup=reply_markup,
     )
     return FIRST
@@ -222,7 +225,9 @@ def topping(update, context):
 
     for topping in toppings:
         keyboard.append(
-            InlineKeyboardButton(text=topping.name, callback_data="BERRIES")
+            InlineKeyboardButton(
+                text=topping.name, callback_data=f"BERRIES|{topping.name}"
+            )
         )
 
     new_keyboard = [keyboard]
@@ -237,7 +242,7 @@ def topping(update, context):
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Выберите действие:",
+        text="Выберите топпинг:",
         reply_markup=reply_markup,
     )
     return FIRST
@@ -252,7 +257,9 @@ def berries(update, context):
 
     for berry in berries:
         keyboard.append(
-            InlineKeyboardButton(text=berry.name, callback_data="DECOR")
+            InlineKeyboardButton(
+                text=berry.name, callback_data=f"DECOR|{berry.name}"
+            )
         )
 
     new_keyboard = [keyboard]
@@ -267,7 +274,7 @@ def berries(update, context):
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Выберите действие:",
+        text="Выберите ягоды:",
         reply_markup=reply_markup,
     )
     return FIRST
@@ -282,7 +289,9 @@ def decor(update, context):
 
     for decor in decors:
         keyboard.append(
-            InlineKeyboardButton(text=decor.name, callback_data="TITLE")
+            InlineKeyboardButton(
+                text=decor.name, callback_data=f"TITLE|{decor.name}"
+            )
         )
 
     new_keyboard = [keyboard]
@@ -297,7 +306,7 @@ def decor(update, context):
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Выберите действие:",
+        text="Выберите декор:",
         reply_markup=reply_markup,
     )
     return FIRST
@@ -533,11 +542,11 @@ class Command(BaseCommand):
                         levels, pattern="^" + str(LEVELS) + "$"
                     ),
                     # CallbackQueryHandler(form, pattern="^" + str(FORM) + "$"),
-                    CallbackQueryHandler(form, pattern="^FORM$"),
-                    CallbackQueryHandler(topping, pattern="^TOPPING$"),
-                    CallbackQueryHandler(berries, pattern="^BERRIES$"),
-                    CallbackQueryHandler(decor, pattern="^DECOR$"),
-                    CallbackQueryHandler(title, pattern="^TITLE$"),
+                    CallbackQueryHandler(form, pattern="^FORM.*"),
+                    CallbackQueryHandler(topping, pattern="^TOPPING.*"),
+                    CallbackQueryHandler(berries, pattern="^BERRIES.*"),
+                    CallbackQueryHandler(decor, pattern="^DECOR.*"),
+                    CallbackQueryHandler(title, pattern="^TITLE.*"),
                     CallbackQueryHandler(
                         comments, pattern="^" + str(COMMENTS) + "$"
                     ),
