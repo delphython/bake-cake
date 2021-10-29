@@ -3,16 +3,47 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from telegram import Bot
 from telegram import Update
-from telegram.ext import CallbackContext
-from telegram.ext import CommandHandler
-from telegram.ext import Filters
-from telegram.ext import MessageHandler
-from telegram.ext import Updater
+from telegram import (
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+    KeyboardButton,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+from telegram.ext import (
+    Updater,
+    CommandHandler,
+    MessageHandler,
+    Filters,
+    ConversationHandler,
+    CallbackQueryHandler,
+    CallbackContext,
+)
 from telegram.utils.request import Request
 
 
 from ugc.models import Message
 from ugc.models import Profile
+
+
+FIRST, SECOND = range(2)
+(
+    LEVELS,
+    EXIT,
+    COMPLITED_ORDERS,
+    START_OVER,
+    FORM,
+    TOPPING,
+    BERRIES,
+    DECOR,
+    TITLE,
+    COMMENTS,
+    DELIVERY_ADDRESS,
+    DELIVERY_DATE,
+    DELIVERY_TIME,
+    ORDER_CAKE,
+    SHOW_COST,
+) = range(15)
 
 
 def log_errors(f):
@@ -52,6 +83,7 @@ def do_echo(update: Update, context: CallbackContext):
 
 @log_errors
 def do_count(update: Update, context: CallbackContext):
+    reply_keyboard = [["count"]]
     chat_id = update.message.chat_id
 
     p, _ = Profile.objects.get_or_create(
@@ -62,10 +94,357 @@ def do_count(update: Update, context: CallbackContext):
     )
     count = Message.objects.filter(profile=p).count()
 
-    count = 0
     update.message.reply_text(
         text=f"У вас {count} сообщений",
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard, one_time_keyboard=True
+        ),
     )
+
+
+@log_errors
+def start(update, context):
+    keyboard = [
+        [
+            InlineKeyboardButton("Собрать торт", callback_data=str(LEVELS)),
+            InlineKeyboardButton(
+                "Сделанные заказы", callback_data=str(COMPLITED_ORDERS)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text("Выберите действие:", reply_markup=reply_markup)
+    return FIRST
+
+
+@log_errors
+def start_over(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton("Собрать торт", callback_data=str(LEVELS)),
+            InlineKeyboardButton(
+                "Сделанные заказы", callback_data=str(COMPLITED_ORDERS)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def levels(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "Количество уровней", callback_data=str(FORM)
+            ),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def form(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton("Форма", callback_data=str(TOPPING)),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def topping(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton("Топпинг", callback_data=str(BERRIES)),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def berries(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton("Ягоды", callback_data=str(DECOR)),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def decor(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton("Декор", callback_data=str(TITLE)),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def title(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton("Надпись", callback_data=str(COMMENTS)),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def comments(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "Комментарий к заказу", callback_data=str(DELIVERY_ADDRESS)
+            ),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def delivery_address(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "Адрес доставки", callback_data=str(DELIVERY_DATE)
+            ),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def delivery_date(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "Дата доставки", callback_data=str(DELIVERY_TIME)
+            ),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def delivery_time(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "Время доставки", callback_data=str(ORDER_CAKE)
+            ),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def order_cake(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "Заказать торт", callback_data=str(SHOW_COST)
+            ),
+            InlineKeyboardButton(
+                "Отменить выполнение заказа", callback_data=str(START_OVER)
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def show_cost(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "Собрать еще торт", callback_data=str(LEVELS)
+            ),
+            InlineKeyboardButton("Выход", callback_data=str(EXIT)),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Сумма заказа:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def complited_orders(update, context):
+    query = update.callback_query
+    bot = context.bot
+    keyboard = [
+        [
+            InlineKeyboardButton("Собрать торт", callback_data=str(LEVELS)),
+            InlineKeyboardButton("Выход", callback_data=str(EXIT)),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Ваши заказы",
+        reply_markup=reply_markup,
+    )
+    return FIRST
+
+
+@log_errors
+def end(update, context):
+    query = update.callback_query
+    bot = context.bot
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Всего Вам хорошего!",
+    )
+    return ConversationHandler.END
 
 
 class Command(BaseCommand):
@@ -86,7 +465,7 @@ class Command(BaseCommand):
             token=TG_TOKEN,
             base_url=getattr(settings, "PROXY_URL", None),
         )
-        print(bot.get_me())
+        # print(bot.get_me())
 
         # 2 -- обработчики
         updater = Updater(
@@ -94,9 +473,63 @@ class Command(BaseCommand):
             use_context=True,
         )
 
-        message_handler = MessageHandler(Filters.text, do_echo)
-        updater.dispatcher.add_handler(message_handler)
-        updater.dispatcher.add_handler(CommandHandler("count", do_count))
+        conv_handler = ConversationHandler(
+            entry_points=[CommandHandler("start", start)],
+            states={
+                FIRST: [
+                    CallbackQueryHandler(
+                        levels, pattern="^" + str(LEVELS) + "$"
+                    ),
+                    CallbackQueryHandler(form, pattern="^" + str(FORM) + "$"),
+                    CallbackQueryHandler(
+                        topping, pattern="^" + str(TOPPING) + "$"
+                    ),
+                    CallbackQueryHandler(
+                        berries, pattern="^" + str(BERRIES) + "$"
+                    ),
+                    CallbackQueryHandler(
+                        decor, pattern="^" + str(DECOR) + "$"
+                    ),
+                    CallbackQueryHandler(
+                        title, pattern="^" + str(TITLE) + "$"
+                    ),
+                    CallbackQueryHandler(
+                        comments, pattern="^" + str(COMMENTS) + "$"
+                    ),
+                    CallbackQueryHandler(
+                        delivery_address,
+                        pattern="^" + str(DELIVERY_ADDRESS) + "$",
+                    ),
+                    CallbackQueryHandler(
+                        delivery_date, pattern="^" + str(DELIVERY_DATE) + "$"
+                    ),
+                    CallbackQueryHandler(
+                        delivery_time, pattern="^" + str(DELIVERY_TIME) + "$"
+                    ),
+                    CallbackQueryHandler(
+                        order_cake, pattern="^" + str(ORDER_CAKE) + "$"
+                    ),
+                    CallbackQueryHandler(
+                        show_cost, pattern="^" + str(SHOW_COST) + "$"
+                    ),
+                    CallbackQueryHandler(
+                        complited_orders,
+                        pattern="^" + str(COMPLITED_ORDERS) + "$",
+                    ),
+                    CallbackQueryHandler(end, pattern="^" + str(EXIT) + "$"),
+                    CallbackQueryHandler(
+                        start_over, pattern="^" + str(START_OVER) + "$"
+                    ),
+                ],
+            },
+            fallbacks=[CommandHandler("start", start)],
+        )
+
+        # message_handler = MessageHandler(Filters.text, do_echo)
+        # updater.dispatcher.add_handler(message_handler)
+        # updater.dispatcher.add_handler(CommandHandler("count", do_count))
+        # updater.dispatcher.add_handler(CommandHandler("starting", do_starting))
+        updater.dispatcher.add_handler(conv_handler)
 
         # 3 -- запустить бесконечную обработку входящих сообщений
         updater.start_polling()
