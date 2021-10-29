@@ -186,7 +186,9 @@ def levels(update, context):
 
 @log_errors
 def form(update, context):
+    global _level
     query = update.callback_query
+    _, _level = query.data.split("|")
     bot = context.bot
     forms = Forms.objects.all()
     keyboard = []
@@ -218,7 +220,9 @@ def form(update, context):
 
 @log_errors
 def topping(update, context):
+    global _form
     query = update.callback_query
+    _, _form = query.data.split("|")
     bot = context.bot
     toppings = Topping.objects.all()
     keyboard = []
@@ -250,7 +254,9 @@ def topping(update, context):
 
 @log_errors
 def berries(update, context):
+    global _topping
     query = update.callback_query
+    _, _topping = query.data.split("|")
     bot = context.bot
     berries = Berries.objects.all()
     keyboard = []
@@ -282,7 +288,9 @@ def berries(update, context):
 
 @log_errors
 def decor(update, context):
+    global _berries
     query = update.callback_query
+    _, _berries = query.data.split("|")
     bot = context.bot
     decors = Decors.objects.all()
     keyboard = []
@@ -314,7 +322,9 @@ def decor(update, context):
 
 @log_errors
 def title(update, context):
+    global _decor
     query = update.callback_query
+    _, _decor = query.data.split("|")
     bot = context.bot
     keyboard = [
         [
@@ -432,6 +442,7 @@ def delivery_time(update, context):
 
 @log_errors
 def order_cake(update, context):
+    save_order()
     query = update.callback_query
     bot = context.bot
     keyboard = [
@@ -452,6 +463,45 @@ def order_cake(update, context):
         reply_markup=reply_markup,
     )
     return FIRST
+
+
+def save_order():
+    global _level
+    global _form
+    global _topping
+    global _berries
+    global _decor
+
+    level = Levels.objects.get(name=_level)
+    form = Forms.objects.get(name=_form)
+    topping = Topping.objects.get(name=_topping)
+    berries = Berries.objects.get(name=_berries)
+    decor = Decors.objects.get(name=_decor)
+    customer = Customers.objects.get(telegram_id="11225544")
+    title = "title"
+    comment = "comment"
+    delivery_address = "delivery_address"
+    delivery_date = "2021-01-01"
+    delivery_time = "12:00"
+    cost = 200
+    status = OrderStatuses.objects.get(status="готовим ваш торт")
+
+    order = Orders(
+        level=level,
+        form=form,
+        topping=topping,
+        berries=berries,
+        decor=decor,
+        customer=customer,
+        title=title,
+        comment=comment,
+        delivery_address=delivery_address,
+        delivery_date=delivery_date,
+        delivery_time=delivery_time,
+        cost=cost,
+        status=status,
+    )
+    order.save()
 
 
 @log_errors
