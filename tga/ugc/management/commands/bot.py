@@ -155,13 +155,14 @@ def levels(update, context):
 
     for level in levels:
         keyboard.append(
-            InlineKeyboardButton(
-                text=level.name, callback_data=f"FORM|{level.name}"
-            )
+            [
+                InlineKeyboardButton(
+                    text=level.name, callback_data=f"FORM|{level.name}"
+                )
+            ]
         )
 
-    new_keyboard = [keyboard]
-    new_keyboard.append(
+    keyboard.append(
         [
             InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
@@ -169,7 +170,7 @@ def levels(update, context):
         ]
     )
 
-    reply_markup = InlineKeyboardMarkup(new_keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
     bot.edit_message_text(
         chat_id=query.message.chat_id,
@@ -185,26 +186,32 @@ def form(update, context):
     global _level
     query = update.callback_query
     _, _level = query.data.split("|")
+    # query.edit_message_text(text="Вы выбрали: {_level}")
     bot = context.bot
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text=f"Вы выбрали уровень: {_level}",
+    )
     forms = Forms.objects.all()
     keyboard = []
 
     for form in forms:
         keyboard.append(
-            InlineKeyboardButton(
-                text=form.name, callback_data=f"TOPPING|{form.name}"
-            )
+            [
+                InlineKeyboardButton(
+                    text=form.name, callback_data=f"TOPPING|{form.name}"
+                )
+            ]
         )
 
-    new_keyboard = [keyboard]
-    new_keyboard.append(
+    keyboard.append(
         [
             InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
             )
         ]
     )
-    reply_markup = InlineKeyboardMarkup(new_keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
@@ -220,25 +227,30 @@ def topping(update, context):
     query = update.callback_query
     _, _form = query.data.split("|")
     bot = context.bot
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text=f"Вы выбрали форму: {_form}",
+    )
     toppings = Topping.objects.all()
     keyboard = []
 
     for topping in toppings:
         keyboard.append(
-            InlineKeyboardButton(
-                text=topping.name, callback_data=f"BERRIES|{topping.name}"
-            )
+            [
+                InlineKeyboardButton(
+                    text=topping.name, callback_data=f"BERRIES|{topping.name}"
+                )
+            ]
         )
 
-    new_keyboard = [keyboard]
-    new_keyboard.append(
+    keyboard.append(
         [
             InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
             )
         ]
     )
-    reply_markup = InlineKeyboardMarkup(new_keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
@@ -254,25 +266,30 @@ def berries(update, context):
     query = update.callback_query
     _, _topping = query.data.split("|")
     bot = context.bot
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text=f"Вы выбрали топпинг: {_topping}",
+    )
     berries = Berries.objects.all()
     keyboard = []
 
     for berry in berries:
         keyboard.append(
-            InlineKeyboardButton(
-                text=berry.name, callback_data=f"DECOR|{berry.name}"
-            )
+            [
+                InlineKeyboardButton(
+                    text=berry.name, callback_data=f"DECOR|{berry.name}"
+                )
+            ]
         )
 
-    new_keyboard = [keyboard]
-    new_keyboard.append(
+    keyboard.append(
         [
             InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
             )
         ]
     )
-    reply_markup = InlineKeyboardMarkup(new_keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
@@ -288,25 +305,30 @@ def decor(update, context):
     query = update.callback_query
     _, _berries = query.data.split("|")
     bot = context.bot
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text=f"Вы выбрали ягоды: {_berries}",
+    )
     decors = Decors.objects.all()
     keyboard = []
 
     for decor in decors:
         keyboard.append(
-            InlineKeyboardButton(
-                text=decor.name, callback_data=f"TITLE|{decor.name}"
-            )
+            [
+                InlineKeyboardButton(
+                    text=decor.name, callback_data=f"TITLE|{decor.name}"
+                )
+            ]
         )
 
-    new_keyboard = [keyboard]
-    new_keyboard.append(
+    keyboard.append(
         [
             InlineKeyboardButton(
                 "Отменить выполнение заказа", callback_data=str(START_OVER)
             )
         ]
     )
-    reply_markup = InlineKeyboardMarkup(new_keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
@@ -322,21 +344,29 @@ def title(update, context):
     query = update.callback_query
     _, _decor = query.data.split("|")
     bot = context.bot
-    keyboard = [
-        [
-            InlineKeyboardButton("Надпись", callback_data=str(COMMENTS)),
-            InlineKeyboardButton(
-                "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
-        text="Выберите действие:",
-        reply_markup=reply_markup,
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text=f"Вы выбрали декор: {_decor}",
     )
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text="Мы можем разместить на торте любую надпись, например: «С днем рождения!»",
+    )
+    # keyboard = [
+    #     [
+    #         InlineKeyboardButton("Надпись", callback_data=str(COMMENTS)),
+    #         InlineKeyboardButton(
+    #             "Отменить выполнение заказа", callback_data=str(START_OVER)
+    #         ),
+    #     ]
+    # ]
+    # reply_markup = InlineKeyboardMarkup(keyboard)
+    # bot.edit_message_text(
+    #     chat_id=query.message.chat_id,
+    #     message_id=query.message.message_id,
+    #     text="Выберите действие:",
+    #     reply_markup=reply_markup,
+    # )
     return FIRST
 
 
@@ -438,9 +468,14 @@ def delivery_time(update, context):
 
 @log_errors
 def order_cake(update, context):
-    save_order()
+    order_cost = save_order()
     query = update.callback_query
     bot = context.bot
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text=f"Сумма заказа: {order_cost} руб.",
+    )
+
     keyboard = [
         [
             InlineKeyboardButton(
@@ -451,6 +486,7 @@ def order_cake(update, context):
             ),
         ]
     ]
+
     reply_markup = InlineKeyboardMarkup(keyboard)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
@@ -479,7 +515,7 @@ def save_order():
     delivery_address = "delivery_address"
     delivery_date = "2021-01-01"
     delivery_time = "12:00"
-    cost = 200
+    cost = level.cost + form.cost + topping.cost + berries.cost + decor.cost
     status = OrderStatuses.objects.get(status="готовим ваш торт")
 
     order = Orders(
@@ -499,6 +535,8 @@ def save_order():
     )
     order.save()
 
+    return cost
+
 
 @log_errors
 def show_cost(update, context):
@@ -516,7 +554,7 @@ def show_cost(update, context):
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Сумма заказа:",
+        text="Выберите действие",
         reply_markup=reply_markup,
     )
     return FIRST
@@ -546,9 +584,8 @@ def complited_orders(update, context):
 def end(update, context):
     query = update.callback_query
     bot = context.bot
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
         text="Всего Вам хорошего!",
     )
     return ConversationHandler.END
@@ -587,7 +624,6 @@ class Command(BaseCommand):
                     CallbackQueryHandler(
                         levels, pattern="^" + str(LEVELS) + "$"
                     ),
-                    # CallbackQueryHandler(form, pattern="^" + str(FORM) + "$"),
                     CallbackQueryHandler(form, pattern="^FORM.*"),
                     CallbackQueryHandler(topping, pattern="^TOPPING.*"),
                     CallbackQueryHandler(berries, pattern="^BERRIES.*"),
