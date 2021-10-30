@@ -14,6 +14,8 @@ from telegram.ext import (
     ConversationHandler,
     CallbackQueryHandler,
     CallbackContext,
+    MessageHandler,
+    Filters,
 )
 from telegram.utils.request import Request
 
@@ -31,7 +33,7 @@ from ugc.models import (
     Orders,
 )
 
-FIRST, SECOND = range(2)
+FIRST, COMMENTS = range(2)
 (
     LEVELS,
     EXIT,
@@ -367,13 +369,20 @@ def title(update, context):
     #     text="Выберите действие:",
     #     reply_markup=reply_markup,
     # )
-    return FIRST
+    return COMMENTS
 
 
 @log_errors
 def comments(update, context):
+    global _title_cost
     query = update.callback_query
     bot = context.bot
+    if update.message.text:
+        bot.send_message(
+            chat_id=update.message.chat_id,
+            text=f"Вы выбрали надпись: {update.message.text}",
+        )
+        _title_cost = 500
     keyboard = [
         [
             InlineKeyboardButton(
@@ -620,6 +629,9 @@ class Command(BaseCommand):
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler("start", start)],
             states={
+                COMMENTS: [
+                    MessageHandler(Filters.text & ~Filters.command, comments)
+                ],
                 FIRST: [
                     CallbackQueryHandler(
                         levels, pattern="^" + str(LEVELS) + "$"
