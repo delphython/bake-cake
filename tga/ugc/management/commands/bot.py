@@ -5,16 +5,12 @@ from telegram import Bot
 from telegram import Update
 from telegram import (
     ReplyKeyboardMarkup,
-    ReplyKeyboardRemove,
-    KeyboardButton,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
 from telegram.ext import (
     Updater,
     CommandHandler,
-    MessageHandler,
-    Filters,
     ConversationHandler,
     CallbackQueryHandler,
     CallbackContext,
