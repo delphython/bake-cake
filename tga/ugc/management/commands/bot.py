@@ -33,7 +33,14 @@ from ugc.models import (
     Orders,
 )
 
-FIRST, COMMENTS = range(2)
+(
+    FIRST,
+    COMMENTS,
+    DELIVERY_ADDRESS,
+    DELIVERY_DATE,
+    DELIVERY_TIME,
+    ORDER_CAKE,
+) = range(6)
 (
     LEVELS,
     EXIT,
@@ -45,13 +52,9 @@ FIRST, COMMENTS = range(2)
     DECOR,
     TITLE,
     COMMENTS,
-    DELIVERY_ADDRESS,
-    DELIVERY_DATE,
-    DELIVERY_TIME,
-    ORDER_CAKE,
     SHOW_COST,
     INPUT_LEVELS,
-) = range(16)
+) = range(12)
 
 
 def log_errors(f):
@@ -112,11 +115,13 @@ def do_count(update: Update, context: CallbackContext):
 
 @log_errors
 def start(update, context):
+    global _telegram_id
+    _telegram_id = "11225544"
     keyboard = [
         [
             InlineKeyboardButton("Собрать торт", callback_data=str(LEVELS)),
             InlineKeyboardButton(
-                "Сделанные заказы", callback_data=str(COMPLITED_ORDERS)
+                "Сделанные заказы", callback_data="COMPLITED_ORDERS"
             ),
         ]
     ]
@@ -138,12 +143,7 @@ def start_over(update, context):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
-        text="Выберите действие:",
-        reply_markup=reply_markup,
-    )
+    update.message.reply_text("Выберите действие:", reply_markup=reply_markup)
     return FIRST
 
 
@@ -304,7 +304,11 @@ def berries(update, context):
 @log_errors
 def decor(update, context):
     global _berries
+    global _message_id
+    global _chat_id
     query = update.callback_query
+    _message_id = query.message.message_id
+    _chat_id = query.message.chat_id
     _, _berries = query.data.split("|")
     bot = context.bot
     bot.send_message(
@@ -354,136 +358,142 @@ def title(update, context):
         chat_id=update.callback_query.from_user.id,
         text="Мы можем разместить на торте любую надпись, например: «С днем рождения!»",
     )
-    # keyboard = [
-    #     [
-    #         InlineKeyboardButton("Надпись", callback_data=str(COMMENTS)),
-    #         InlineKeyboardButton(
-    #             "Отменить выполнение заказа", callback_data=str(START_OVER)
-    #         ),
-    #     ]
-    # ]
-    # reply_markup = InlineKeyboardMarkup(keyboard)
-    # bot.edit_message_text(
-    #     chat_id=query.message.chat_id,
-    #     message_id=query.message.message_id,
-    #     text="Выберите действие:",
-    #     reply_markup=reply_markup,
-    # )
     return COMMENTS
 
 
 @log_errors
 def comments(update, context):
     global _title_cost
-    query = update.callback_query
+    global _title
+    global _message_id
+    global _chat_id
+    # query = update.callback_query
     bot = context.bot
     if update.message.text:
         bot.send_message(
             chat_id=update.message.chat_id,
             text=f"Вы выбрали надпись: {update.message.text}",
         )
+        _title = update.message.text
         _title_cost = 500
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "Комментарий к заказу", callback_data=str(DELIVERY_ADDRESS)
-            ),
-            InlineKeyboardButton(
-                "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
-        text="Выберите действие:",
-        reply_markup=reply_markup,
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Введите комментарий к заказу:",
     )
-    return FIRST
+
+    return DELIVERY_ADDRESS
 
 
 @log_errors
 def delivery_address(update, context):
-    query = update.callback_query
+    global _message_id
+    global _chat_id
+    global _telegram_id
+    global _comment
+    global _current_address
+
+    customer = Customers.objects.get(telegram_id=_telegram_id)
     bot = context.bot
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "Адрес доставки", callback_data=str(DELIVERY_DATE)
-            ),
-            InlineKeyboardButton(
-                "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
-        text="Выберите действие:",
-        reply_markup=reply_markup,
+    if update.message.text:
+        bot.send_message(
+            chat_id=update.message.chat_id,
+            text=f"Ваш комментарий к заказу: {update.message.text}",
+        )
+    _comment = update.message.text
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text="""Введите новый адрес доставки или нажмите
+                Ввод, если желаете оставить текущий адрес:""",
     )
-    return FIRST
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text=customer.address,
+    )
+    _current_address = customer.address
+
+    return DELIVERY_DATE
 
 
 @log_errors
 def delivery_date(update, context):
-    query = update.callback_query
+    global _message_id
+    global _chat_id
+    global _current_address
+    global _delivery_address
+    # query = update.callback_query
     bot = context.bot
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "Дата доставки", callback_data=str(DELIVERY_TIME)
-            ),
-            InlineKeyboardButton(
-                "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
-        text="Выберите действие:",
-        reply_markup=reply_markup,
+    if update.message.text:
+        bot.send_message(
+            chat_id=update.message.chat_id,
+            text=f"Вы выбрали новый адрес: {update.message.text}",
+        )
+        _delivery_address = update.message.text
+    else:
+        _delivery_address = _current_address
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Введите дату доставки в формате дд.мм.гггг:",
     )
-    return FIRST
+
+    return DELIVERY_TIME
 
 
 @log_errors
 def delivery_time(update, context):
-    query = update.callback_query
+    global _message_id
+    global _chat_id
+    # query = update.callback_query
     bot = context.bot
+    if update.message.text:
+        bot.send_message(
+            chat_id=update.message.chat_id,
+            text=f"Вы выбрали дату доставки: {update.message.text}",
+        )
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Вебирите время доставки:",
+    )
     keyboard = [
         [
             InlineKeyboardButton(
-                "Время доставки", callback_data=str(ORDER_CAKE)
-            ),
+                "с 08:00 по 12:00", callback_data="ORDER_CAKE|с 08:00 по 12:00"
+            )
+        ],
+        [
             InlineKeyboardButton(
-                "Отменить выполнение заказа", callback_data=str(START_OVER)
-            ),
-        ]
+                "с 12:00 по 16:00", callback_data="ORDER_CAKE|с 12:00 по 16:00"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "с 16:00 по 20:00", callback_data="ORDER_CAKE|с 16:00 по 20:00"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                "с 20:00 по 24:00", callback_data="ORDER_CAKE|с 20:00 по 24:00"
+            )
+        ],
     ]
+
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
-        text="Выберите действие:",
-        reply_markup=reply_markup,
+    update.message.reply_text(
+        "Вебирите время доставки:", reply_markup=reply_markup
     )
     return FIRST
 
 
 @log_errors
 def order_cake(update, context):
-    order_cost = save_order()
-    query = update.callback_query
+    global _delivery_time
     bot = context.bot
+    query = update.callback_query
+    _, _delivery_time = query.data.split("|")
     bot.send_message(
         chat_id=update.callback_query.from_user.id,
-        text=f"Сумма заказа: {order_cost} руб.",
+        text=f"Вы выбрали время доставки: {_delivery_time}",
     )
+    order_cost = save_order()
 
     keyboard = [
         [
@@ -497,21 +507,26 @@ def order_cake(update, context):
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
-        text="Выберите действие:",
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text=f"Сумма заказа: {order_cost} руб.",
         reply_markup=reply_markup,
     )
+    update.message.reply_text("Выберите действие:", reply_markup=reply_markup)
     return FIRST
 
 
+@log_errors
 def save_order():
     global _level
     global _form
     global _topping
     global _berries
     global _decor
+    global _delivery_time
+    global _title
+    global _comment
+    global _delivery_address
 
     level = Levels.objects.get(name=_level)
     form = Forms.objects.get(name=_form)
@@ -519,11 +534,11 @@ def save_order():
     berries = Berries.objects.get(name=_berries)
     decor = Decors.objects.get(name=_decor)
     customer = Customers.objects.get(telegram_id="11225544")
-    title = "title"
-    comment = "comment"
-    delivery_address = "delivery_address"
-    delivery_date = "2021-01-01"
-    delivery_time = "12:00"
+    title = _title
+    comment = _comment
+    delivery_address = _delivery_address
+    delivery_date = "2021-11-01"
+    delivery_time = _delivery_time
     cost = level.cost + form.cost + topping.cost + berries.cost + decor.cost
     status = OrderStatuses.objects.get(status="готовим ваш торт")
 
@@ -570,9 +585,31 @@ def show_cost(update, context):
 
 
 @log_errors
+def get_orders_text(t_id):
+    orders_text = []
+    orders = Orders.objects.filter(customer__telegram_id=t_id)
+    for order in orders:
+        orders_text.append(
+            f"Заказ № {order.id}\n"
+            + f"Стоимость торта: {order.cost} руб.\n"
+            + f"Дата заказа: {order.delivery_date}\n"
+            + f"Время заказа: {order.delivery_time}\n"
+            + f"Статус заказа: {order.status.status}"
+        )
+    return orders_text
+
+
+@log_errors
 def complited_orders(update, context):
+    orders_text = get_orders_text("11225544")
     query = update.callback_query
     bot = context.bot
+    for order_text in orders_text:
+        bot.send_message(
+            chat_id=update.callback_query.from_user.id,
+            text=order_text,
+        )
+
     keyboard = [
         [
             InlineKeyboardButton("Собрать торт", callback_data=str(LEVELS)),
@@ -580,10 +617,10 @@ def complited_orders(update, context):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.edit_message_text(
+    bot.send_message(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Ваши заказы",
+        text="Выберите действие",
         reply_markup=reply_markup,
     )
     return FIRST
@@ -632,6 +669,21 @@ class Command(BaseCommand):
                 COMMENTS: [
                     MessageHandler(Filters.text & ~Filters.command, comments)
                 ],
+                DELIVERY_ADDRESS: [
+                    MessageHandler(
+                        Filters.text & ~Filters.command, delivery_address
+                    )
+                ],
+                DELIVERY_DATE: [
+                    MessageHandler(
+                        Filters.text & ~Filters.command, delivery_date
+                    )
+                ],
+                DELIVERY_TIME: [
+                    MessageHandler(
+                        Filters.text & ~Filters.command, delivery_time
+                    )
+                ],
                 FIRST: [
                     CallbackQueryHandler(
                         levels, pattern="^" + str(LEVELS) + "$"
@@ -654,15 +706,13 @@ class Command(BaseCommand):
                     CallbackQueryHandler(
                         delivery_time, pattern="^" + str(DELIVERY_TIME) + "$"
                     ),
-                    CallbackQueryHandler(
-                        order_cake, pattern="^" + str(ORDER_CAKE) + "$"
-                    ),
+                    CallbackQueryHandler(order_cake, pattern="^ORDER_CAKE.*"),
                     CallbackQueryHandler(
                         show_cost, pattern="^" + str(SHOW_COST) + "$"
                     ),
                     CallbackQueryHandler(
                         complited_orders,
-                        pattern="^" + str(COMPLITED_ORDERS) + "$",
+                        pattern="^COMPLITED_ORDERS.*",
                     ),
                     CallbackQueryHandler(end, pattern="^" + str(EXIT) + "$"),
                     CallbackQueryHandler(
@@ -673,12 +723,10 @@ class Command(BaseCommand):
             fallbacks=[CommandHandler("start", start)],
         )
 
-        # message_handler = MessageHandler(Filters.text, do_echo)
-        # updater.dispatcher.add_handler(message_handler)
-        # updater.dispatcher.add_handler(CommandHandler("count", do_count))
-        # updater.dispatcher.add_handler(CommandHandler("starting", do_starting))
         updater.dispatcher.add_handler(conv_handler)
 
         # 3 -- запустить бесконечную обработку входящих сообщений
+        updater.start_polling()
+        updater.idle()
         updater.start_polling()
         updater.idle()
