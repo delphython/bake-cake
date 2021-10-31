@@ -81,7 +81,7 @@ class OrderStatuses(models.Model):
         max_length=256,
         blank=True,
         default="",
-        verbose_name="Номер телефона заказчика",
+        verbose_name="Статус заказа",
     )
 
     def __str__(self):
@@ -200,6 +200,7 @@ class Decors(models.Model):
 class Orders(models.Model):
     customer = models.ForeignKey(
         to="ugc.Customers",
+        related_name="customers",
         verbose_name="Заказчик",
         on_delete=models.PROTECT,
     )
@@ -215,7 +216,7 @@ class Orders(models.Model):
     delivery_date = models.DateField(
         verbose_name="Дата доставки",
     )
-    delivery_time = models.TimeField(
+    delivery_time = models.TextField(
         verbose_name="Время доставки",
     )
     cost = models.DecimalField(
@@ -225,6 +226,7 @@ class Orders(models.Model):
     )
     status = models.ForeignKey(
         to="ugc.OrderStatuses",
+        related_name="statuses",
         verbose_name="Статус заказа",
         null=True,
         on_delete=models.SET_NULL,
