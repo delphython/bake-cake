@@ -189,7 +189,6 @@ def form(update, context):
     global _level
     query = update.callback_query
     _, _level = query.data.split("|")
-    # query.edit_message_text(text="Вы выбрали: {_level}")
     bot = context.bot
     bot.send_message(
         chat_id=update.callback_query.from_user.id,
@@ -368,7 +367,6 @@ def comments(update, context):
     global _title
     global _message_id
     global _chat_id
-    # query = update.callback_query
     bot = context.bot
     _title_cost = 0
     if update.message.text:
@@ -433,10 +431,6 @@ def delivery_date(update, context):
         _delivery_address = update.message.text
     else:
         _delivery_address = _current_address
-    # bot.send_message(
-    #     chat_id=update.message.chat_id,
-    #     text="Введите дату доставки:",
-    # )
 
     for date_delta in range(0, 5):
         delivery_date = (date.today() + timedelta(days=date_delta)).strftime(
@@ -668,7 +662,6 @@ def complited_orders(update, context):
 
 @log_errors
 def end(update, context):
-    query = update.callback_query
     bot = context.bot
     bot.send_message(
         chat_id=update.callback_query.from_user.id,
@@ -685,7 +678,6 @@ class Command(BaseCommand):
         env.read_env()
         TG_TOKEN = env.str("TG_TOKEN")
 
-        # 1 -- правильное подключение
         request = Request(
             connect_timeout=0.5,
             read_timeout=1.0,
@@ -695,9 +687,7 @@ class Command(BaseCommand):
             token=TG_TOKEN,
             base_url=getattr(settings, "PROXY_URL", None),
         )
-        # print(bot.get_me())
 
-        # 2 -- обработчики
         updater = Updater(
             bot=bot,
             use_context=True,
@@ -760,7 +750,6 @@ class Command(BaseCommand):
 
         updater.dispatcher.add_handler(conv_handler)
 
-        # 3 -- запустить бесконечную обработку входящих сообщений
         updater.start_polling()
         updater.idle()
         updater.start_polling()
