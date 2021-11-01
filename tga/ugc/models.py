@@ -85,7 +85,7 @@ class OrderStatuses(models.Model):
     )
 
     def __str__(self):
-        return "Статусы заказов"
+        return self.status
 
     class Meta:
         verbose_name = "Статус заказа"
@@ -106,7 +106,7 @@ class Levels(models.Model):
     )
 
     def __str__(self):
-        return "Количество уровней"
+        return self.name
 
     class Meta:
         verbose_name = "Количество уровней"
@@ -127,7 +127,7 @@ class Forms(models.Model):
     )
 
     def __str__(self):
-        return "Формы"
+        return self.name
 
     class Meta:
         verbose_name = "Форма"
@@ -148,7 +148,7 @@ class Topping(models.Model):
     )
 
     def __str__(self):
-        return "Топпинг"
+        return self.name
 
     class Meta:
         verbose_name = "Топпинг"
@@ -169,7 +169,7 @@ class Berries(models.Model):
     )
 
     def __str__(self):
-        return "Ягода"
+        return self.name
 
     class Meta:
         verbose_name = "Ягода"
@@ -190,7 +190,7 @@ class Decors(models.Model):
     )
 
     def __str__(self):
-        return "Декор"
+        return self.name
 
     class Meta:
         verbose_name = "Декор"
