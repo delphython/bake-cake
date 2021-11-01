@@ -1,4 +1,5 @@
 from environs import Env
+from datetime import date, timedelta, datetime
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from telegram import Bot
@@ -38,14 +39,14 @@ from ugc.models import (
     COMMENTS,
     DELIVERY_ADDRESS,
     DELIVERY_DATE,
-    DELIVERY_TIME,
     ORDER_CAKE,
-) = range(6)
+) = range(5)
 (
     LEVELS,
     EXIT,
     COMPLITED_ORDERS,
     START_OVER,
+    DELIVERY_TIME,
     FORM,
     TOPPING,
     BERRIES,
@@ -54,7 +55,7 @@ from ugc.models import (
     COMMENTS,
     SHOW_COST,
     INPUT_LEVELS,
-) = range(12)
+) = range(13)
 
 
 def log_errors(f):
@@ -369,6 +370,7 @@ def comments(update, context):
     global _chat_id
     # query = update.callback_query
     bot = context.bot
+    _title_cost = 0
     if update.message.text:
         bot.send_message(
             chat_id=update.message.chat_id,
@@ -420,7 +422,8 @@ def delivery_date(update, context):
     global _chat_id
     global _current_address
     global _delivery_address
-    # query = update.callback_query
+
+    keyboard = []
     bot = context.bot
     if update.message.text:
         bot.send_message(
@@ -430,27 +433,51 @@ def delivery_date(update, context):
         _delivery_address = update.message.text
     else:
         _delivery_address = _current_address
+    # bot.send_message(
+    #     chat_id=update.message.chat_id,
+    #     text="Введите дату доставки:",
+    # )
+
+    for date_delta in range(0, 5):
+        delivery_date = (date.today() + timedelta(days=date_delta)).strftime(
+            "%d.%m.%Y"
+        )
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    text=str(delivery_date),
+                    callback_data=f"DELIVERY_TIME|{str(delivery_date)}",
+                )
+            ]
+        )
+    reply_markup = InlineKeyboardMarkup(keyboard)
     bot.send_message(
         chat_id=update.message.chat_id,
-        text="Введите дату доставки в формате дд.мм.гггг:",
+        text="Выберите дату доставки:",
+        reply_markup=reply_markup,
     )
-
-    return DELIVERY_TIME
+    return FIRST
 
 
 @log_errors
 def delivery_time(update, context):
     global _message_id
     global _chat_id
-    # query = update.callback_query
+    global _delivery_date
+    global _is_now_delivery_date
+
+    _is_now_delivery_date = False
+    query = update.callback_query
+    _, _delivery_date = query.data.split("|")
+    if datetime.strptime(_delivery_date, "%d.%m.%Y") == date.today():
+        _is_now_delivery_date = True
     bot = context.bot
-    if update.message.text:
-        bot.send_message(
-            chat_id=update.message.chat_id,
-            text=f"Вы выбрали дату доставки: {update.message.text}",
-        )
     bot.send_message(
-        chat_id=update.message.chat_id,
+        chat_id=update.callback_query.from_user.id,
+        text=f"Вы выбрали дату доставки: {_delivery_date}",
+    )
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
         text="Вебирите время доставки:",
     )
     keyboard = [
@@ -477,8 +504,10 @@ def delivery_time(update, context):
     ]
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(
-        "Вебирите время доставки:", reply_markup=reply_markup
+    bot.send_message(
+        chat_id=update.callback_query.from_user.id,
+        text="Выберите время доставки:",
+        reply_markup=reply_markup,
     )
     return FIRST
 
@@ -527,6 +556,8 @@ def save_order():
     global _title
     global _comment
     global _delivery_address
+    global _is_now_delivery_date
+    global _title_cost
 
     level = Levels.objects.get(name=_level)
     form = Forms.objects.get(name=_form)
@@ -537,9 +568,18 @@ def save_order():
     title = _title
     comment = _comment
     delivery_address = _delivery_address
-    delivery_date = "2021-11-01"
+    delivery_date = datetime.strptime(_delivery_date, "%d.%m.%Y")
     delivery_time = _delivery_time
-    cost = level.cost + form.cost + topping.cost + berries.cost + decor.cost
+    cost = (
+        level.cost
+        + form.cost
+        + topping.cost
+        + berries.cost
+        + decor.cost
+        + _title_cost
+    )
+    if _is_now_delivery_date:
+        cost += cost * 0.2
     status = OrderStatuses.objects.get(status="готовим ваш торт")
 
     order = Orders(
@@ -679,11 +719,6 @@ class Command(BaseCommand):
                         Filters.text & ~Filters.command, delivery_date
                     )
                 ],
-                DELIVERY_TIME: [
-                    MessageHandler(
-                        Filters.text & ~Filters.command, delivery_time
-                    )
-                ],
                 FIRST: [
                     CallbackQueryHandler(
                         levels, pattern="^" + str(LEVELS) + "$"
@@ -704,7 +739,7 @@ class Command(BaseCommand):
                         delivery_date, pattern="^" + str(DELIVERY_DATE) + "$"
                     ),
                     CallbackQueryHandler(
-                        delivery_time, pattern="^" + str(DELIVERY_TIME) + "$"
+                        delivery_time, pattern="^DELIVERY_TIME.*"
                     ),
                     CallbackQueryHandler(order_cake, pattern="^ORDER_CAKE.*"),
                     CallbackQueryHandler(
@@ -726,6 +761,8 @@ class Command(BaseCommand):
         updater.dispatcher.add_handler(conv_handler)
 
         # 3 -- запустить бесконечную обработку входящих сообщений
+        updater.start_polling()
+        updater.idle()
         updater.start_polling()
         updater.idle()
         updater.start_polling()
