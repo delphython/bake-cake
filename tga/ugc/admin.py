@@ -141,4 +141,6 @@ class OrdersAdmin(admin.ModelAdmin):
         "delivery_date",
         "delivery_time",
         "cost",
+        "decor",
     )
+    list_filter = ("status",)
