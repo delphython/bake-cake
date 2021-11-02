@@ -752,7 +752,3 @@ class Command(BaseCommand):
 
         updater.start_polling()
         updater.idle()
-        updater.start_polling()
-        updater.idle()
-        updater.start_polling()
-        updater.idle()

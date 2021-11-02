@@ -1,8 +1,5 @@
 from django.contrib import admin
 
-from .forms import ProfileForm
-from .models import Message
-from .models import Profile
 from .models import Levels
 from .models import Forms
 from .models import Topping
@@ -11,26 +8,6 @@ from .models import Decors
 from .models import OrderStatuses
 from .models import Customers
 from .models import Orders
-
-
-@admin.register(Profile)
-class ProfileAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "external_id",
-        "name",
-    )
-    form = ProfileForm
-
-
-@admin.register(Message)
-class MessageAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "profile",
-        "text",
-        "created_at",
-    )
 
 
 @admin.register(Levels)
