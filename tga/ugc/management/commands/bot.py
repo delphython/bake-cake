@@ -97,15 +97,31 @@ def register_user(update, context):
             + "на обработку персональных данных",
             reply_markup=reply_markup,
         )
-
-        return FIRST
     else:
         bot = context.bot
         bot.send_message(
             chat_id=update.message.chat_id,
             text="Вы уже зарегистрированы в системе:",
         )
-        return START_AFTER_REG
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "Собрать торт", callback_data=str(LEVELS)
+                ),
+                InlineKeyboardButton(
+                    "Сделанные заказы", callback_data="COMPLITED_ORDERS"
+                ),
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        bot = context.bot
+        bot.send_message(
+            chat_id=update.message.chat_id,
+            text="Выберите действие:",
+            reply_markup=reply_markup,
+        )
+    return FIRST
 
 
 @log_errors
@@ -157,12 +173,28 @@ def register_address(update, context):
         chat_id=update.message.chat_id,
         text=f"Пользователь {user_first_name} {user_last_name} зарегистрирован.",
     )
-    return START_AFTER_REG
+    keyboard = [
+        [
+            InlineKeyboardButton("Собрать торт", callback_data=str(LEVELS)),
+            InlineKeyboardButton(
+                "Сделанные заказы", callback_data="COMPLITED_ORDERS"
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    bot = context.bot
+
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
+    return FIRST
 
 
 @log_errors
 def start(update, context):
-    global _telegram_id
     keyboard = [
         [
             InlineKeyboardButton("Собрать торт", callback_data=str(LEVELS)),
