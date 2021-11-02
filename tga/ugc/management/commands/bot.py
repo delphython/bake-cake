@@ -163,8 +163,6 @@ def register_address(update, context):
 @log_errors
 def start(update, context):
     global _telegram_id
-    print("ddddddddddddddddddddddd")
-    # _telegram_id = "11225544"
     keyboard = [
         [
             InlineKeyboardButton("Собрать торт", callback_data=str(LEVELS)),
@@ -175,12 +173,10 @@ def start(update, context):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    query = update.callback_query
     bot = context.bot
 
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
+    bot.send_message(
+        chat_id=update.message.chat_id,
         text="Выберите действие:",
         reply_markup=reply_markup,
     )
@@ -616,13 +612,14 @@ def save_order():
     global _delivery_address
     global _is_now_delivery_date
     global _title_cost
+    global _telegram_id
 
     level = Levels.objects.get(name=_level)
     form = Forms.objects.get(name=_form)
     topping = Topping.objects.get(name=_topping)
     berries = Berries.objects.get(name=_berries)
     decor = Decors.objects.get(name=_decor)
-    customer = Customers.objects.get(telegram_id="11225544")
+    customer = Customers.objects.get(telegram_id=_telegram_id)
     title = _title
     comment = _comment
     delivery_address = _delivery_address
