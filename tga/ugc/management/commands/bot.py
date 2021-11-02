@@ -1,11 +1,10 @@
+import os
 from environs import Env
 from datetime import date, timedelta, datetime
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from telegram import Bot
-from telegram import Update
 from telegram import (
-    ReplyKeyboardMarkup,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
@@ -14,7 +13,6 @@ from telegram.ext import (
     CommandHandler,
     ConversationHandler,
     CallbackQueryHandler,
-    CallbackContext,
     MessageHandler,
     Filters,
 )
@@ -22,8 +20,6 @@ from telegram.utils.request import Request
 
 
 from ugc.models import (
-    Message,
-    Profile,
     Customers,
     OrderStatuses,
     Levels,
@@ -40,7 +36,11 @@ from ugc.models import (
     DELIVERY_ADDRESS,
     DELIVERY_DATE,
     ORDER_CAKE,
-) = range(5)
+    END,
+    REGISTER_ADDRESS,
+    REGISTER_PHONE,
+    START_AFTER_REG,
+) = range(9)
 (
     LEVELS,
     EXIT,
@@ -55,7 +55,8 @@ from ugc.models import (
     COMMENTS,
     SHOW_COST,
     INPUT_LEVELS,
-) = range(13)
+    START,
+) = range(14)
 
 
 def log_errors(f):
@@ -71,53 +72,99 @@ def log_errors(f):
 
 
 @log_errors
-def do_echo(update: Update, context: CallbackContext):
-    chat_id = update.message.chat_id
-    text = update.message.text
+def register_user(update, context):
+    global _telegram_id
 
-    p, _ = Profile.objects.get_or_create(
-        external_id=chat_id,
-        defaults={
-            "name": update.message.from_user.username,
-        },
-    )
-    m = Message(
-        profile=p,
-        text=text,
-    )
-    m.save()
+    _telegram_id = update.message.chat_id
 
-    reply_text = f"Ваш ID = {chat_id}\n{text}"
-    update.message.reply_text(
-        text=reply_text,
-    )
+    customer = Customers.objects.filter(telegram_id=_telegram_id)
+    if customer.count() == 0:
+        pdn_file_name = "pdn.pdf"
+        pdn_file_path = os.path.join(os.getcwd(), pdn_file_name)
+
+        bot = context.bot
+        bot.send_document(update.message.chat.id, open(pdn_file_path, "rb"))
+
+        keyboard = [
+            [
+                InlineKeyboardButton("Согласен", callback_data="AGREE"),
+                InlineKeyboardButton("Не согласен", callback_data="EXIT"),
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        update.message.reply_text(
+            "Для продолжения работы Вам необходимо принять согласие"
+            + "на обработку персональных данных",
+            reply_markup=reply_markup,
+        )
+
+        return FIRST
+    else:
+        bot = context.bot
+        bot.send_message(
+            chat_id=update.message.chat_id,
+            text="Вы уже зарегистрированы в системе:",
+        )
+        return START_AFTER_REG
 
 
 @log_errors
-def do_count(update: Update, context: CallbackContext):
-    reply_keyboard = [["count"]]
-    chat_id = update.message.chat_id
+def register_next(update, context):
+    query = update.callback_query
 
-    p, _ = Profile.objects.get_or_create(
-        external_id=chat_id,
-        defaults={
-            "name": update.message.from_user.username,
-        },
+    bot = context.bot
+    bot.send_message(
+        chat_id=query.message.chat_id,
+        text="Введите свой номер телефона:",
     )
-    count = Message.objects.filter(profile=p).count()
+    return REGISTER_PHONE
 
-    update.message.reply_text(
-        text=f"У вас {count} сообщений",
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True
-        ),
+
+@log_errors
+def register_phone(update, context):
+    global _user_phone_number
+
+    _user_phone_number = update.message.text
+    bot = context.bot
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text="Введите адрес доставки:",
     )
+    return REGISTER_ADDRESS
+
+
+@log_errors
+def register_address(update, context):
+    global _user_phone_number
+    global _telegram_id
+
+    telegram_user = update.effective_user
+    user_first_name = telegram_user.first_name or ""
+    user_last_name = telegram_user.last_name or ""
+    user_address = update.message.text
+
+    customer = Customers(
+        telegram_id=_telegram_id,
+        phone_number=_user_phone_number,
+        first_name=user_first_name,
+        last_name=user_last_name,
+        address=user_address,
+    )
+    customer.save()
+
+    bot = context.bot
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text=f"Пользователь {user_first_name} {user_last_name} зарегистрирован.",
+    )
+    return START_AFTER_REG
 
 
 @log_errors
 def start(update, context):
     global _telegram_id
-    _telegram_id = "11225544"
+    print("ddddddddddddddddddddddd")
+    # _telegram_id = "11225544"
     keyboard = [
         [
             InlineKeyboardButton("Собрать торт", callback_data=str(LEVELS)),
@@ -127,7 +174,16 @@ def start(update, context):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text("Выберите действие:", reply_markup=reply_markup)
+
+    query = update.callback_query
+    bot = context.bot
+
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите действие:",
+        reply_markup=reply_markup,
+    )
     return FIRST
 
 
@@ -143,8 +199,15 @@ def start_over(update, context):
             ),
         ]
     ]
+
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text("Выберите действие:", reply_markup=reply_markup)
+
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Выберите количество уровней",
+        reply_markup=reply_markup,
+    )
     return FIRST
 
 
@@ -178,7 +241,7 @@ def levels(update, context):
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Выберите Количество уровней",
+        text="Выберите количество уровней",
         reply_markup=reply_markup,
     )
     return FIRST
@@ -356,7 +419,8 @@ def title(update, context):
     )
     bot.send_message(
         chat_id=update.callback_query.from_user.id,
-        text="Мы можем разместить на торте любую надпись, например: «С днем рождения!»",
+        text="Мы можем разместить на торте любую надпись,"
+        + " например: «С днем рождения!»",
     )
     return COMMENTS
 
@@ -694,7 +758,7 @@ class Command(BaseCommand):
         )
 
         conv_handler = ConversationHandler(
-            entry_points=[CommandHandler("start", start)],
+            entry_points=[CommandHandler("start", register_user)],
             states={
                 COMMENTS: [
                     MessageHandler(Filters.text & ~Filters.command, comments)
@@ -709,6 +773,19 @@ class Command(BaseCommand):
                         Filters.text & ~Filters.command, delivery_date
                     )
                 ],
+                REGISTER_ADDRESS: [
+                    MessageHandler(
+                        Filters.text & ~Filters.command, register_address
+                    )
+                ],
+                REGISTER_PHONE: [
+                    MessageHandler(
+                        Filters.text & ~Filters.command, register_phone
+                    )
+                ],
+                START_AFTER_REG: [
+                    MessageHandler(Filters.text & ~Filters.command, start)
+                ],
                 FIRST: [
                     CallbackQueryHandler(
                         levels, pattern="^" + str(LEVELS) + "$"
@@ -718,6 +795,7 @@ class Command(BaseCommand):
                     CallbackQueryHandler(berries, pattern="^BERRIES.*"),
                     CallbackQueryHandler(decor, pattern="^DECOR.*"),
                     CallbackQueryHandler(title, pattern="^TITLE.*"),
+                    CallbackQueryHandler(register_next, pattern="^AGREE.*"),
                     CallbackQueryHandler(
                         comments, pattern="^" + str(COMMENTS) + "$"
                     ),
@@ -739,13 +817,13 @@ class Command(BaseCommand):
                         complited_orders,
                         pattern="^COMPLITED_ORDERS.*",
                     ),
-                    CallbackQueryHandler(end, pattern="^" + str(EXIT) + "$"),
+                    CallbackQueryHandler(end, pattern="^EXIT.*"),
                     CallbackQueryHandler(
                         start_over, pattern="^" + str(START_OVER) + "$"
                     ),
                 ],
             },
-            fallbacks=[CommandHandler("start", start)],
+            fallbacks=[CommandHandler("start", register_user)],
         )
 
         updater.dispatcher.add_handler(conv_handler)
